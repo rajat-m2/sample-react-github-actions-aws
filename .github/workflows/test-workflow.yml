@@ -1,0 +1,29 @@
+name: test-workflow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: zip
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r ./bundle.zip ./
+
+    - name: Upload file to bucket
+      uses: zdurham/s3-upload-github-action@master
+      env:
+        FILE: ./bundle.zip
+        AWS_REGION: 'ap-south-1'
+        function_name: "${{ github.ref == 'refs/heads/master' && 'autoport-import-prod' || 'autoport-import-demo' }}"
+        S3_BUCKET: 'sample-prod-workflow'
+        S3_KEY: 'bundle.zip'
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
